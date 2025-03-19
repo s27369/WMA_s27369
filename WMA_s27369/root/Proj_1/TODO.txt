@@ -1,0 +1,3 @@
+- te funkcje to klocki, trzeba z nich zbudować w kodzie funkcje która będzie dobrze działała
+- poczytać o morfologii, zamykaniu otwieraniu
+- btw to zabezpieczenie cx cy w marker() to tylko plasterek bo jeśli m00 = 0 to i tak coś źle poszło na wcześniejszym etapie bo to oznacza że wzięto pojedynczy pixel

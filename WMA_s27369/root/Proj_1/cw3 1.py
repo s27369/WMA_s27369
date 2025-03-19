@@ -1,0 +1,124 @@
+import cv2
+import numpy as np
+import os
+
+# pip install opencv-python
+
+
+def uploud(i):
+    global files, image
+    image = cv2.imread(r'C:\Users\macmac\Downloads\pliki\{}'.format(files[i-ord('0')]))
+    norm_size()
+
+
+def resize():
+    global image
+    h, w = image.shape[:2]
+    h = h + int(h*(-0.1))
+    w = w + int(w*(-0.1))
+    image = cv2.resize(image, (w, h), interpolation= cv2.INTER_LINEAR)
+    cv2.imshow('obrazek', image)
+
+
+def norm_size():
+    global image
+    h, w = image.shape[:2]
+    if h > w:
+        if h > 800:
+            s = (1 - (800/h)) * (-1)
+            w = w + int(w*(s))
+            h = h + int(h*(s))
+            image = cv2.resize(image, (w, h), interpolation= cv2.INTER_LINEAR)
+    else:
+        if w > 800:
+            s = (1 - (800/w)) * (-1)
+            w = w + int(w*(s))
+            h = h + int(h*(s))
+            image = cv2.resize(image, (w, h), interpolation= cv2.INTER_LINEAR)
+    cv2.imshow('obrazek', image)
+
+
+def hsv_range():
+    low_color = cv2.getTrackbarPos('low', 'obrazek')
+    high_color = cv2.getTrackbarPos('high', 'obrazek')
+    # Convert the HSV colorspace
+    hsv_frame = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    # Threshold the HSV image to get only blue color
+    lower = np.array([low_color, 100, 100])
+    upper = np.array([high_color, 255, 255])
+    mask = cv2.inRange(hsv_frame, lower, upper)
+    cv2.imshow('obrazek', mask)
+
+
+def hsv_bitwais():
+    low_color = cv2.getTrackbarPos('low', 'obrazek')
+    high_color = cv2.getTrackbarPos('high', 'obrazek')
+    hsv_frame = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    lower = np.array([low_color, 100, 100])
+    upper = np.array([high_color, 255, 255])
+    mask = cv2.inRange(hsv_frame, lower, upper)
+    # Bitwise-AND mask and original image
+    res = cv2.bitwise_and(image, image, mask=mask)
+    cv2.imshow('obrazek', res)
+
+
+def hsv_median():
+    low_color = cv2.getTrackbarPos('low', 'obrazek')
+    high_color = cv2.getTrackbarPos('high', 'obrazek')
+    ksize = cv2.getTrackbarPos('ksize', 'obrazek')
+    hsv_frame = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    lower = np.array([low_color, 100, 100])
+    upper = np.array([high_color, 255, 255])
+    mask = cv2.inRange(hsv_frame, lower, upper)
+    res = cv2.bitwise_and(image, image, mask=mask)
+    res = cv2.medianBlur(res, ksize=ksize)
+    cv2.imshow('obrazek', res)
+
+
+def morphology():
+    low_color = cv2.getTrackbarPos('low', 'obrazek')
+    high_color = cv2.getTrackbarPos('high', 'obrazek')
+    ksize = cv2.getTrackbarPos('ksize', 'obrazek')
+    hsv_frame = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    lower = np.array([low_color, 100, 100])
+    upper = np.array([high_color, 255, 255])
+    mask = cv2.inRange(hsv_frame, lower, upper)
+    kernel = np.ones((ksize, ksize), np.uint8)
+    mask_without_noise = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+    cv2.imshow('obrazek', mask_without_noise)
+
+
+def morphology2():
+    low_color = cv2.getTrackbarPos('low', 'obrazek')
+    high_color = cv2.getTrackbarPos('high', 'obrazek')
+    ksize = cv2.getTrackbarPos('ksize', 'obrazek')
+    hsv_frame = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    lower = np.array([low_color, 100, 100])
+    upper = np.array([high_color, 255, 255])
+    mask = cv2.inRange(hsv_frame, lower, upper)
+    kernel = np.ones((ksize, ksize), np.uint8)
+    # mask_without_noise = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((7, 7), np.uint8))
+    mask_closed = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    cv2.imshow('obrazek', mask_closed)
+
+
+def marker():
+    low_color = cv2.getTrackbarPos('low', 'obrazek')
+    high_color = cv2.getTrackbarPos('high', 'obrazek')
+
+    hsv_frame = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    lower = np.array([low_color, 100, 100])
+    upper = np.array([high_color, 255, 255])
+
+    mask = cv2.inRange(hsv_frame, lower, upper)
+    contours, hierarchy = cv2.findContours(mask, 1, 2)
+    print(contours)
+    M = cv2.moments(contours[0])
+    cx = int(M['m10'] / M['m00'])
+    cy = int(M['m01'] / M['m00'])
+    image_marker = image.copy()
+    cv2.drawMarker(image_marker, (int(cx), int(cy)), color=(
+        0, 255, 0), markerType=cv2.MARKER_CROSS, thickness=2)
+    cv2.imshow('obrazek', image_marker)
+
+
