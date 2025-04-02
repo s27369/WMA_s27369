@@ -2,3 +2,11 @@
 low 1
 high 15
 k 17
+
+
+blur, maska
+
+5gr
+l 2
+h 3
+k 8

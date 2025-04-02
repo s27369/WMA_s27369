@@ -5,7 +5,12 @@ import numpy as np
 
 file_path = r".\media"
 
-def upload(i, path, files):
+def upload(i, path):
+    global image, files
+    print(files)
+    print(i, type(i))
+    if (i>10):
+        i -= ord('0')
     image_path = os.path.join(path, files[i])
     image = cv2.imread(image_path)
     print("loading")
@@ -243,7 +248,7 @@ def main():
     if not files:
         print("No files found in the directory.")
         return
-    image = upload(0, file_path, files)
+    image = upload(0, file_path)
     nimg = image.copy()
     cv2.createTrackbar('low', 'obrazek', 0, 255, change_h)
     cv2.createTrackbar('high', 'obrazek', 0, 255, change_h)
@@ -253,7 +258,7 @@ def main():
         key = cv2.waitKey()
     # -----------wybor obrazka----------------
         if key >= ord('0') and key <= ord('9'):
-            upload(key)
+            upload(key, file_path)
             nimg = image.copy()
     # ----------------zmiana rozmiaru---------------
         elif key == ord('-'):
