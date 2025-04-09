@@ -237,6 +237,71 @@ def rotate():
 
     # Wyświetl obrócony obraz w oknie o nazwie 'obrazek'
     cv2.imshow('obrazek', rotated_image)
+#----------------------------------------------------------------------------zad
+def detect_circles():
+    global image
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    blurred = cv2.GaussianBlur(gray, (9, 9), 2)
+    circles = cv2.HoughCircles(blurred, cv2.HOUGH_GRADIENT, dp=1, minDist=36,
+                               param1=51, param2=38, minRadius=10, maxRadius=0)
+    return circles
+
+
+def detect_and_classify_coins():
+    global image
+    circles = detect_circles()
+    output = image.copy()
+
+    if circles is not None:
+        circles = np.uint16(np.around(circles))
+        radii = []
+
+        for i in circles[0, :]:
+            radius = i[2]
+            radii.append(radius)
+            cv2.circle(output, (i[0], i[1]), radius, (0, 255, 0), 2)
+
+        if radii:
+            median_radius = np.median(radii)
+            for i, r in zip(circles[0, :], radii):
+                label = "5zl" if r > median_radius else "5gr"
+                cv2.putText(output, label, (i[0] - 20, i[1]),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
+
+    cv2.imshow("obrazek", output)
+
+def detect_tray():
+    global image
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    blurred = cv2.GaussianBlur(gray, (7, 7), 0)
+    _, thresh = cv2.threshold(blurred, 60, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+
+    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    tray = None
+    max_area = 0
+    output = image.copy()
+
+    for contour in contours:
+        area = cv2.contourArea(contour)
+        if area > max_area:
+            max_area = area
+            tray = contour
+
+    if tray is not None:
+        rect = cv2.minAreaRect(tray)
+        box = cv2.boxPoints(rect)
+        box = np.int0(box)
+        cv2.drawContours(output, [box], 0, (0, 255, 255), 2)
+        cv2.putText(output, "Tray", (box[0][0], box[0][1] - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
+    else:
+        cv2.putText(output, "No tray found", (20, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+
+    cv2.imshow("obrazek", output)
+
+
 
 image = None
 fun = None
@@ -322,9 +387,17 @@ def main():
         elif key == ord('k'):
             line()
             fun = line
+        elif key == ord('v'):
+            detect_and_classify_coins()
+            fun = detect_and_classify_coins
+        elif key == ord('b'):
+            detect_tray()
+            fun = detect_tray
+
         elif key == 27:
             cv2.destroyAllWindows()
             break
+
 
 if __name__ == '__main__':
     main()
