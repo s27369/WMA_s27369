@@ -1,4 +1,4 @@
-# from functions import *
+
 import cv2
 import os
 import numpy as np
@@ -75,7 +75,7 @@ def hsv_bitwise():
     global image
     mask = get_mask()
     mask = np.asarray(mask[0], dtype=np.uint8)
-    # Bitwise-AND mask and original image
+    
     res = cv2.bitwise_and(image, image, mask=mask)
     cv2.imshow('obrazek', res)
 
@@ -85,7 +85,7 @@ def hsv_median():
     mask = get_mask()
     mask = np.asarray(mask[0], dtype=np.uint8)
     res = cv2.bitwise_and(image, image, mask=mask)
-    #bo sie crashowalo
+    
     ksize = max(3, ksize)
     if ksize % 2 == 0:
         ksize += 1
@@ -98,18 +98,18 @@ def change_h(x):
     if fun is not None:
         fun()
 
-def morphology():  # open
+def morphology():  
     global image
     mask, ksize = get_mask()
     kernel = np.ones((ksize, ksize), np.uint8)
     mask_without_noise = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
     cv2.imshow('obrazek', mask_without_noise)
 
-def morphology2():  # close
+def morphology2():  
     global image
     mask, ksize = get_mask()
     kernel = np.ones((ksize, ksize), np.uint8)
-    # mask_without_noise = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((7, 7), np.uint8))
+    
     mask_closed = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
     cv2.imshow('obrazek', mask_closed)
 
@@ -127,179 +127,242 @@ def marker():
     cv2.imshow('obrazek', image_marker)
 
 def connect_mask():
-    # Pobierz wartości z suwaków (trackbarów) dla dolnego i górnego zakresu koloru oraz rozmiaru maski
     low_color = cv2.getTrackbarPos('low', 'obrazek')
     high_color = cv2.getTrackbarPos('high', 'obrazek')
     ksize = cv2.getTrackbarPos('ksize', 'obrazek')
-
-    # Konwersja obrazu na przestrzeń kolorów HSV
     hsv_frame = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-
-    # Utworzenie maski dla pierwszego zakresu kolorów
     lower = np.array([low_color, 100, 100])
     upper = np.array([high_color, 255, 255])
     mask = cv2.inRange(hsv_frame, lower, upper)
-
-    # Nałożenie maski na obraz i wyświetlenie wyniku
     res = cv2.bitwise_and(image, image, mask=mask)
     cv2.imshow('mask 1', res)
-
-    # Utworzenie maski dla drugiego zakresu kolorów
     lower = np.array([0, 100, 100])
     upper = np.array([ksize, 255, 255])
     mask2 = cv2.inRange(hsv_frame, lower, upper)
-
-    # Nałożenie drugiej maski na obraz i wyświetlenie wyniku
     res = cv2.bitwise_and(image, image, mask=mask2)
     cv2.imshow('mask 2', res)
-
-    # Połączenie dwóch masek za pomocą operacji bitowej OR
     b_mask = cv2.bitwise_or(mask, mask2)
-
-    # Nałożenie połączonej maski na obraz i wyświetlenie wyniku
     res = cv2.bitwise_and(image, image, mask=b_mask)
     cv2.imshow('obrazek', res)
 
-# key j
 def find_circle():
-    # Pobierz wartości z suwaków (trackbarów) dla dolnego i górnego zakresu koloru oraz rozmiaru maski
     low_color, high_color, ksize = read_ksize_trackbars('obrazek')
-
-    # Utwórz kopię obrazu, aby nie modyfikować oryginału
     c_img = image.copy()
-
-    # Konwersja obrazu na skalę szarości
     gimg = cv2.cvtColor(c_img, cv2.COLOR_RGB2GRAY)
-
-    # Zastosowanie rozmycia na obrazie w skali szarości
     bimg = cv2.blur(gimg, (ksize, ksize))
-
-    # Wykrywanie okręgów za pomocą transformacji Hougha
     circles = cv2.HoughCircles(bimg, cv2.HOUGH_GRADIENT, high_color, low_color)
-    print(circles)  # Wyświetlenie wykrytych okręgów (surowe dane)
-
-    # Zaokrąglenie współrzędnych wykrytych okręgów do liczb całkowitych
+    print(circles)
     circles = np.uint16(np.around(circles))
-    print(circles)  # Wyświetlenie zaokrąglonych współrzędnych okręgów
-
-    # Iteracja po wykrytych okręgach i rysowanie ich na obrazie
+    print(circles)
     for i in circles[0, :]:
-        # Rysowanie okręgu na obrazie (środek: (i[0], i[1]), promień: i[2])
         cv2.circle(c_img, (i[0], i[1]), i[2], (0, 255, 0), 2)
-
-    # Wyświetlenie obrazu z narysowanymi okręgami
     cv2.imshow('obrazek', c_img)
 
-# key k
 def line():
     global image
-    # Pobierz wartości progów dolnego i górnego z trackbarów
     low_color, high_color = read_trackbars('obrazek')
-
-    # Konwersja obrazu na skalę szarości
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-    # Wykrywanie krawędzi za pomocą algorytmu Canny'ego
     edges = cv2.Canny(gray, low_color, high_color, apertureSize=3)
-
-    # Wykrywanie linii za pomocą transformacji Hougha
     lines = cv2.HoughLinesP(edges, 1, np.pi / 180, 90,
                             minLineLength=100, maxLineGap=5)
-
-    # Utworzenie kopii obrazu, aby narysować linie
     image_l = image.copy()
-
-    # Iteracja po wykrytych liniach i rysowanie ich na obrazie
     for line in lines:
         x1, y1, x2, y2 = line[0]
         cv2.line(image_l, (x1, y1), (x2, y2), (0, 255, 0), 2)
-
-    # Wyświetlenie obrazu z narysowanymi liniami
     cv2.imshow("obrazek", image_l)
 
-# key o
 def rotate():
     global image
-    # Pobierz wartość kąta obrotu z trackbara o nazwie 'low'
     rot, _ = read_trackbars('obrazek')
-
-    # Pobierz wymiary obrazu
     height, width = image.shape[:2]
-
-    # Oblicz środek obrazu
     center_x, center_y = (width / 2, height / 2)
-
-    # Utwórz macierz transformacji dla obrotu obrazu
     M = cv2.getRotationMatrix2D((center_x, center_y), rot, 1.0)
-
-    # Zastosuj macierz transformacji, aby obrócić obraz
     rotated_image = cv2.warpAffine(image, M, (width, height))
-
-    # Wyświetl obrócony obraz w oknie o nazwie 'obrazek'
     cv2.imshow('obrazek', rotated_image)
-#----------------------------------------------------------------------------zad
+
 def detect_circles():
     global image
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    blurred = cv2.GaussianBlur(gray, (9, 9), 2)
+    blurred = cv2.GaussianBlur(gray, (11, 11), 3)
     circles = cv2.HoughCircles(blurred, cv2.HOUGH_GRADIENT, dp=1, minDist=36,
                                param1=51, param2=38, minRadius=10, maxRadius=0)
     return circles
 
+def detect_tray():
+    global image
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    lower_orange = np.array([5, 100, 150])
+    upper_orange = np.array([25, 255, 255])
+    mask = cv2.inRange(hsv, lower_orange, upper_orange)
+    kernel = np.ones((5, 5), np.uint8)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    result = image.copy()
+    tray_contour = None
+    if contours:
+        tray_contour = max(contours, key=cv2.contourArea)
+        tray_area = cv2.contourArea(tray_contour)
+        cv2.drawContours(result, [tray_contour], 0, (0, 255, 0), 2)
+        x, y, w, h = cv2.boundingRect(tray_contour)
+        cv2.rectangle(result, (x, y), (x + w, y + h), (255, 0, 0), 2)
+        cv2.putText(result, f"Tray Area: {tray_area:.0f}", (x, y - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
+
+    cv2.imshow('Tray Detection', result)
+    return tray_contour
+
 
 def detect_and_classify_coins():
     global image
+    result = image.copy()
+    tray_contour = detect_tray()
+    if tray_contour is None:
+        print("Tray not detected, cannot classify coins")
+        return
+    tray_area = cv2.contourArea(tray_contour)
     circles = detect_circles()
-    output = image.copy()
+    if circles is None:
+        print("No coins detected")
+        return
+    circles = np.uint16(np.around(circles))
+    threshold_ratio = 0.02
+    for i in circles[0, :]:
+        
+        coin_area = np.pi * (i[2] ** 2)
 
-    if circles is not None:
-        circles = np.uint16(np.around(circles))
-        radii = []
+        
+        area_ratio = coin_area / tray_area
 
-        for i in circles[0, :]:
-            radius = i[2]
-            radii.append(radius)
-            cv2.circle(output, (i[0], i[1]), radius, (0, 255, 0), 2)
+        
+        if area_ratio < threshold_ratio:
+            
+            cv2.circle(result, (i[0], i[1]), i[2], (0, 165, 255), 2)  
+            cv2.putText(result, "5gr", (i[0] - 20, i[1]),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 165, 255), 2)
+        else:
+            
+            cv2.circle(result, (i[0], i[1]), i[2], (255, 0, 0), 2)  
+            cv2.putText(result, "5zl", (i[0] - 20, i[1]),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
 
-        if radii:
-            median_radius = np.median(radii)
-            for i, r in zip(circles[0, :], radii):
-                label = "5zl" if r > median_radius else "5gr"
-                cv2.putText(output, label, (i[0] - 20, i[1]),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
+        
+        cv2.putText(result, f"{area_ratio:.4f}", (i[0] - 20, i[1] + 20),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
 
-    cv2.imshow("obrazek", output)
+    cv2.imshow('Coin Classification', result)
 
-def detect_tray():
+
+def analyze_coins():
     global image
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    blurred = cv2.GaussianBlur(gray, (7, 7), 0)
-    _, thresh = cv2.threshold(blurred, 60, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+    result = image.copy()
+    tray_contour = detect_tray()
+    if tray_contour is None:
+        print("Tray not detected, cannot analyze coins")
+        return
 
-    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    tray_area = cv2.contourArea(tray_contour)
+    circles = detect_circles()
 
-    tray = None
-    max_area = 0
-    output = image.copy()
+    if circles is None:
+        print("No coins detected")
+        return
 
-    for contour in contours:
-        area = cv2.contourArea(contour)
-        if area > max_area:
-            max_area = area
-            tray = contour
+    circles = np.uint16(np.around(circles))
+    threshold_ratio = 0.02
+    total_coin_area = 0
+    count_5gr = 0
+    count_5zl = 0
+    count_5gr_in_tray = 0
+    count_5zl_in_tray = 0
+    total_5zl_area = 0
 
-    if tray is not None:
-        rect = cv2.minAreaRect(tray)
-        box = cv2.boxPoints(rect)
-        box = np.int0(box)
-        cv2.drawContours(output, [box], 0, (0, 255, 255), 2)
-        cv2.putText(output, "Tray", (box[0][0], box[0][1] - 10),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
-    else:
-        cv2.putText(output, "No tray found", (20, 30),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+    tray_mask = np.zeros(image.shape[:2], dtype=np.uint8)
+    cv2.drawContours(tray_mask, [tray_contour], 0, 255, -1)
 
-    cv2.imshow("obrazek", output)
+    for i in circles[0, :]:
+        coin_area = np.pi * (i[2] ** 2)
+        total_coin_area += coin_area
+        area_ratio = coin_area / tray_area
+        is_in_tray = tray_mask[i[1], i[0]] > 0
+        if area_ratio < threshold_ratio:
+            count_5gr += 1
+            if is_in_tray:
+                count_5gr_in_tray += 1
+            cv2.circle(result, (i[0], i[1]), i[2], (0, 165, 255), 2)
+            cv2.putText(result, "5gr", (i[0] - 20, i[1]),
+                        cv2.QT_FONT_NORMAL, 0.6, (0, 165, 255), 2)
+        else:
+            count_5zl += 1
+            total_5zl_area += coin_area
+            if is_in_tray:
+                count_5zl_in_tray += 1
+            cv2.circle(result, (i[0], i[1]), i[2], (255, 0, 0), 2)
+            cv2.putText(result, "5zl", (i[0] - 20, i[1]),
+                        cv2.QT_FONT_NORMAL, 0.6, (255, 0, 0), 2)
+
+    money_in_tray = count_5gr_in_tray * 0.05 + count_5zl_in_tray * 5.0
+    money_outside_tray = (count_5gr - count_5gr_in_tray) * 0.05 + (count_5zl - count_5zl_in_tray) * 5.0
+
+    ratio_5zl_to_tray = total_5zl_area / tray_area if tray_area > 0 else 0
+
+    y_pos = 30
+    cv2.putText(result, f"Total Coin Area: {total_coin_area:.2f}", (10, y_pos),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+    y_pos += 30
+    cv2.putText(result, f"5gr coins: {count_5gr}", (10, y_pos),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 165, 255), 2)
+    y_pos += 30
+    cv2.putText(result, f"5zl coins: {count_5zl}", (10, y_pos),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
+    y_pos += 30
+    cv2.putText(result, f"5zl/Tray ratio: {ratio_5zl_to_tray:.4f}", (10, y_pos),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
+    y_pos += 30
+    cv2.putText(result, f"Money in tray: {money_in_tray:.2f} zl", (10, y_pos),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+    y_pos += 30
+    cv2.putText(result, f"Money outside: {money_outside_tray:.2f} zl", (10, y_pos),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 255), 2)
+
+    cv2.imshow('Coin Analysis', result)
+
+    return {
+        'total_coin_area': total_coin_area,
+        'count_5gr': count_5gr,
+        'count_5zl': count_5zl,
+        'ratio_5zl_to_tray': ratio_5zl_to_tray,
+        'money_in_tray': money_in_tray,
+        'money_outside_tray': money_outside_tray
+    }
+
+
+def calculate_total_coin_area():
+    results = analyze_coins()
+    if results:
+        return results['total_coin_area']
+    return 0
+
+
+def count_coins_by_type():
+    results = analyze_coins()
+    if results:
+        return results['count_5gr'], results['count_5zl']
+    return 0, 0
+
+
+def calculate_5zl_to_tray_ratio():
+    results = analyze_coins()
+    if results:
+        return results['ratio_5zl_to_tray']
+    return 0
+
+
+def calculate_money_distribution():
+    results = analyze_coins()
+    if results:
+        return results['money_in_tray'], results['money_outside_tray']
+    return 0, 0
 
 
 
@@ -321,11 +384,11 @@ def main():
 
     while True:
         key = cv2.waitKey()
-    # -----------wybor obrazka----------------
+    
         if key >= ord('0') and key <= ord('9'):
             upload(key, file_path)
             nimg = image.copy()
-    # ----------------zmiana rozmiaru---------------
+    
         elif key == ord('-'):
             resize()
             nimg = image.copy()
@@ -333,7 +396,7 @@ def main():
         elif key == ord('='):
             cv2.imshow('obrazek', image)
             nimg = image.copy()
-    # ----------------kolory------------------------
+    
         elif key == ord('q'):
             cv2.imshow('obrazek', cv2.cvtColor(image, cv2.COLOR_RGB2GRAY))
         elif key == ord('w'):
@@ -349,15 +412,15 @@ def main():
             hsv_median()
             fun = hsv_median
         elif key == ord('z'):
-            # h = barwa
+            
             cv2.imshow('obrazek', nimg[:, :, 0])
         elif key == ord('x'):
-            # s = nasycene
+            
             cv2.imshow('obrazek', nimg[:, :, 1])
         elif key == ord('c'):
-            # v = wartość
+            
             cv2.imshow('obrazek', nimg[:, :, 2])
-    # ----------------filtry
+    
         elif key == ord('a'):
             cv2.imshow('obrazek', cv2.Canny(image, 55.0, 30.0))
         elif key == ord('s'):
@@ -380,7 +443,7 @@ def main():
         elif key == ord('o'):
             rotate()
             fun = rotate
-    # --------------------krztałty
+    
         elif key == ord('j'):
             find_circle()
             fun = find_circle
@@ -393,6 +456,12 @@ def main():
         elif key == ord('b'):
             detect_tray()
             fun = detect_tray
+        elif key == ord('n'):
+            analyze_coins()
+            fun = analyze_coins
+        elif key == ord('m'):
+            in_tray, outside_tray = calculate_money_distribution()
+            print(f"Money in tray: {in_tray:.2f} zl, Money outside tray: {outside_tray:.2f} zl")
 
         elif key == 27:
             cv2.destroyAllWindows()
